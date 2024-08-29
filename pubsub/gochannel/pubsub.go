@@ -147,13 +147,17 @@ func (g *GoChannel) sendMessage(topic string, message *message.Message) (<-chan 
 	}
 
 	go func(subscribers []*subscriber) {
+		g.logger.Info("GoChannel #1", logFields)
 		wg := &sync.WaitGroup{}
 
 		for i := range subscribers {
 			subscriber := subscribers[i]
 
+			g.logger.Info("GoChannel #2", logFields)
+
 			wg.Add(1)
 			go func() {
+				g.logger.Info("GoChannel #3", logFields)
 				subscriber.sendMessageToSubscriber(message, logFields)
 				wg.Done()
 			}()
@@ -341,14 +345,20 @@ func (s *subscriber) Close() {
 }
 
 func (s *subscriber) sendMessageToSubscriber(msg *message.Message, logFields watermill.LogFields) {
+
+	s.logger.Info("GoChannel #4", logFields)
+
 	s.sending.Lock()
 	defer s.sending.Unlock()
+
+	s.logger.Info("GoChannel #5", logFields)
 
 	ctx, cancelCtx := context.WithCancel(s.ctx)
 	defer cancelCtx()
 
 SendToSubscriber:
 	for {
+		s.logger.Info("GoChannel #6", logFields)
 		// copy the message to prevent ack/nack propagation to other consumers
 		// also allows to make retries on a fresh copy of the original message
 		msgToSend := msg.Copy()
@@ -361,6 +371,7 @@ SendToSubscriber:
 			return
 		}
 
+		s.logger.Info("GoChannel #7", logFields)
 		select {
 		case s.outputChannel <- msgToSend:
 			s.logger.Trace("Sent message to subscriber", logFields)
