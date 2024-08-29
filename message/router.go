@@ -613,10 +613,22 @@ func (h *handler) run(ctx context.Context, middlewares []middleware) {
 	go h.handleClose(ctx)
 
 	for msg := range h.messagesCh {
+		h.logger.Info("GoChannel #8", watermill.LogFields{
+			"subscriber_name": h.name,
+			"topic":           h.subscribeTopic,
+		})
 		h.runningHandlersWgLock.Lock()
+		h.logger.Info("GoChannel #9", watermill.LogFields{
+			"subscriber_name": h.name,
+			"topic":           h.subscribeTopic,
+		})
 		h.runningHandlersWg.Add(1)
 		h.runningHandlersWgLock.Unlock()
 
+		h.logger.Info("GoChannel #10", watermill.LogFields{
+			"subscriber_name": h.name,
+			"topic":           h.subscribeTopic,
+		})
 		go h.handleMessage(msg, middlewareHandler)
 	}
 
@@ -759,6 +771,7 @@ func (h *handler) handleMessage(msg *Message, handler HandlerFunc) {
 	defer h.runningHandlersWg.Done()
 	msgFields := watermill.LogFields{"message_uuid": msg.UUID}
 
+	h.logger.Info("GoChannel #11", msgFields)
 	defer func() {
 		if recovered := recover(); recovered != nil {
 			h.logger.Error(
